@@ -6,17 +6,27 @@ from django.core.files.storage import FileSystemStorage
 from .forms import ResumeForm
 from .functions import handle_uploaded_file
 from .models import ResumeModel
+
+
+# API
+from .serializer import book_serializer
+from rest_framework.renderers import JSONRenderer
 # Create your views here.
-def books(request):
-    books = ResumeModel.objects.all()
-    return render(request,'index.html',{'context':book})
+# def books(request):
+#     books = ResumeModel.objects.all()
+#     return render(request,'index.html',{'context':books})
+
 def homepage(request):
     return render(request,'homepage.html')
 
 
 @login_required(login_url='/login')
 def dashboard(request):
-    return render(request,'index.html')
+    books = ResumeModel.objects.all()
+    serializer = book_serializer(books,many=True)
+    json_data = JSONRenderer().render(serializer.data)
+    print(json_data)
+    return render(request,'index.html',{'context':books})
 
 # @login_required(login_url='/login')
 # def create_post(request):
@@ -36,6 +46,7 @@ def upload_file(request):
             handle_uploaded_file(request.FILES['file'])
             resumeModelInstance = resumeForm.save(commit=False)
             resumeModelInstance.save()
+            # file_url = resumeModelInstance.file.url
             return redirect("/dashboard")
     else:
         resumeForm = ResumeForm()
